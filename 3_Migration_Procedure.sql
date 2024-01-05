@@ -34,7 +34,7 @@ CREATE OR REPLACE PACKAGE BODY OrderMigrationPackage AS
         order_rec.SUPPLIER_NAME,
         order_rec.SUPP_CONTACT_NAME,
         order_rec.SUPP_ADDRESS,
-        order_rec.SUPP_CONTACT_NUMBER,
+        REPLACE(TRANSLATE(NVL(order_rec.SUPP_CONTACT_NUMBER, '0'), 'OoIiSs-', '0011550'), '.', ''),
         order_rec.SUPP_EMAIL
       );
 
