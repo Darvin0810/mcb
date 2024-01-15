@@ -5,7 +5,8 @@ CREATE TABLE Suppliers (
     Supplier_Name VARCHAR2(2000),
     Supplier_Contact_Name VARCHAR2(2000),
     Supplier_Address VARCHAR2(2000),
-    Supplier_Contact_Number VARCHAR2(2000),
+    Supplier_Contact_Number1 VARCHAR2(2000),
+    Supplier_Contact_Number2 VARCHAR2(2000),
     Supplier_Email VARCHAR2(2000)
 );
 

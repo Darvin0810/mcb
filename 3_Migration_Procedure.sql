@@ -14,27 +14,56 @@ END OrderMigrationPackage;
 
 -- Create or replace the package body
 CREATE OR REPLACE PACKAGE BODY OrderMigrationPackage AS
+  FUNCTION formatContactNumber(contactNumber VARCHAR2)
+  RETURN VARCHAR2
+  IS
+  BEGIN
+      IF LENGTH(contactNumber) = 7 THEN
+        RETURN SUBSTR(contactNumber, 1, 3) || '-' || SUBSTR(contactNumber, 4);
+      ELSIF LENGTH(contactNumber) = 8 THEN
+        RETURN SUBSTR(contactNumber, 1, 4) || '-' || SUBSTR(contactNumber, 5);
+      ELSE
+        RETURN NULL;
+      END IF;
+  END formatContactNumber;
+
   -- Procedure to migrate data from XXBCM_ORDER_MGT to normalized tables
   PROCEDURE MigrateData IS
+   v_supp_contact_full VARCHAR2(32);
+   v_supp_contact1 VARCHAR2(32);
+   v_supp_contact2 VARCHAR2(32);
    v_date_str VARCHAR2(20);
    v_date     DATE;
    v_formatted_date VARCHAR2(20);
   BEGIN
     FOR order_rec IN (SELECT * FROM XXBCM_ORDER_MGT) LOOP
+      -- Split contact numbers if multiple is available
+      v_supp_contact_full := REPLACE(REPLACE(TRANSLATE(NVL(order_rec.SUPP_CONTACT_NUMBER, '0'), 'OoIiSs-', '0011550'), '.'), ' ');
+
+      IF INSTR(v_supp_contact_full, ',') = 0 THEN
+          v_supp_contact1 := formatContactNumber(v_supp_contact_full);
+          v_supp_contact2 := NULL;
+      ELSE
+        v_supp_contact1 := formatContactNumber(SUBSTR(v_supp_contact_full, 1, INSTR(v_supp_contact_full, ',') - 1));
+        v_supp_contact2 := formatContactNumber(SUBSTR(v_supp_contact_full, INSTR(v_supp_contact_full, ',') + 1));
+      END IF;
+
       -- Insert data into Suppliers table
       INSERT INTO Suppliers (
         Supplier_ID,
         Supplier_Name,
         Supplier_Contact_Name,
         Supplier_Address,
-        Supplier_Contact_Number,
+        Supplier_Contact_Number1,
+        Supplier_Contact_Number2,
         Supplier_Email
       ) VALUES (
         SupplierSeq.NEXTVAL,
         order_rec.SUPPLIER_NAME,
         order_rec.SUPP_CONTACT_NAME,
         order_rec.SUPP_ADDRESS,
-        REPLACE(TRANSLATE(NVL(order_rec.SUPP_CONTACT_NUMBER, '0'), 'OoIiSs-', '0011550'), '.', ''),
+        v_supp_contact1,
+        v_supp_contact2,
         order_rec.SUPP_EMAIL
       );
 
